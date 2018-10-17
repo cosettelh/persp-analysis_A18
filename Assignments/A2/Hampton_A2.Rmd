@@ -1,0 +1,240 @@
+---
+title: "MACS 30000 PS 2, Fall 2018"
+author: "Cosette L. Hampton"
+date: "10/16/2018"
+output: pdf_document
+---
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lintr)
+library(styler)
+library(dplyr)
+library(knitr)
+library(pastecs)
+library(psych)
+library(xtable) 
+library(tinytex)
+library(stargazer)
+library(formatR)
+library(tis)
+```
+
+## Imputing age and gender (3 points)
+
+```{r Loading Data}
+setwd("/Users/cosettelh/Documents/UChi_local/Grad_MPP/MACSS/persp-analysis_A18/Assignments/A2")
+
+bestincome <- read.csv("BestIncome.txt", header = FALSE, 
+                         col.names = c("lab_inc", "cap_inc", "hgt", "wgt"))
+incomeintel <- read.csv("IncomeIntel.txt", header = FALSE, 
+                          col.names = c("grad_year", "gre_qnt", "salary_p4"))
+survincome <- read.csv("SurvIncome.txt", header = FALSE, 
+                         col.names = c("tot_inc", "wgt", "age", "female"))
+```
+
+```{r Viewing Data & Details, results="hide"}
+print(bestincome)
+as.data.frame(describe(bestincome, na.rm = TRUE))
+stat.desc(bestincome)
+
+
+print(survincome)
+as.data.frame(describe(survincome, na.rm = TRUE))
+stat.desc(survincome)
+
+print(incomeintel)
+as.data.frame(describe(incomeintel, na.rm = TRUE))
+stat.desc(incomeintel)
+```
+
+### (A)
+
+OLS models help estimate an unknown outcome given several parameters. We can impute age and gender into BestIncome by using an OLS model based on an equation with SurveyIncome since both datasets have the variables weight and tot_inc can be computed with lab_inc and cap_inc. 
+
+```{r results="hide"}
+#Adding tot_pop column 
+bestincome$tot_inc <- bestincome$lab_inc + bestincome$cap_inc 
+print(bestincome)
+as.data.frame(describe(bestincome, na.rm = TRUE))
+```
+```{r}
+#Providing the OLS models 
+lm_age <- lm(age~tot_inc+wgt, data = survincome)
+lm_female <- lm(female~tot_inc+wgt, data = survincome)
+
+lm_age
+lm_female
+```
+So the equations are: 
+age_form = 44.2096668+(tot_inc*0.0000252)+(wgt*-0.0067221) 
+gen_form = 3.761+(tot_inc*-0.000005250)+(wgt*-0.01953)
+
+### (B)
+
+```{r Imputing}
+age_form <- 44.2096668+(bestincome$tot_inc*0.0000252)+(bestincome$wgt*-0.0067221) 
+gen_form <- 3.761+(bestincome$tot_inc*-0.000005250)+(bestincome$wgt*-0.01953)
+
+bestincome$age <- age_form
+bestincome$female <- gen_form
+
+head(bestincome, 10)
+```
+
+```{r Rounding the female column}
+bestincome <- bestincome %>% 
+  mutate_at(vars(female), funs(round(.,0))) %>%
+  select(-tot_inc)
+  
+head(bestincome, 10)
+```
+
+### (C) 
+
+See output table from imputed_vars
+```{r Descriptive stats}
+imputed_vars <- bestincome %>% select(age, female)
+imputed_vars <- as.data.frame(describe(imputed_vars, na.rm = TRUE))
+imputed_vars <- imputed_vars %>% select(mean, sd, min, max, n)
+imputed_vars
+  
+```
+### (D)
+See table printed below: 
+```{r}
+corr_matrix <- as_data_frame(cor(bestincome))
+corr_matrix
+```
+
+## Stationary and data drift (4 points)
+
+```{r Viewing Data, results="hide"}
+print(incomeintel)
+```
+The equation: salary_p4i = b0 + b1gre_qnti + ei
+
+### (A)
+
+In plain words, the equation is for the salary is the predictor variable, and the GRE quantitative score is the predictor variable. b0 is the Y-intercept. ei is an error term. Using a linear regression model and inference from the graph, we compute the equation to be: 
+
+salary_p4i = 89541.29 - -25.76*gre_qnti + ei
+
+The estimated Y-intercept coefficient is 89,541.29 and the estimated GRE score coefficient is -25.76. Their standard errors are 878.764 and 1.365 respectively. Both coefficients are significant at the 95% confidence level. 
+```{r}
+Y_hat <- mean(incomeintel$salary_p4)
+Y_hat
+
+incomeintel_lm <- lm(salary_p4 ~ gre_qnt, data = incomeintel)
+incomeintel_lm
+summary(incomeintel_lm)
+
+```
+
+### (B)
+
+The GRE quantitative scoring scale changed in 2011, from (200-800) at 10-point increments to now (130-170) at 1-point increments. This change is represented on the plot shown below with the huge gap in scores from 2010 to 2011, and a steeply decreasing line of best fit. 
+
+As such the data need to be adjusted to better compare recent score data to pre-2011 scores. A simple google search shows how the ETS compares old to new scores. For example, for Quant new 166-170 = 800 old and new 151 = 640-650 old. 
+```{r Scatterplot_1}
+ggplot(data = incomeintel, aes(x = grad_year, y = gre_qnt)) + 
+  geom_point() + 
+  geom_smooth(method='lm') +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(x = "Graduation Year", y = "GRE Quantitative Score") + 
+  scale_x_continuous(labels = as.character(incomeintel$grad_year), 
+                     breaks = incomeintel$grad_year)
+
+```
+```{r using ETS conversion}
+score_conv <- read_xlsx("new_scores.xlsx") #Reading in conversion table 
+
+incomeintel <- incomeintel %>% #rounding scores from given data
+  mutate("gre_qnt" <- ifelse(grad_year < 2011, round(gre_qnt, -1), round(gre_qnt,0))) %>% 
+  select(-(gre_qnt)) 
+
+names(incomeintel)[3] <- "gre_qnt"
+```
+```{r}
+#joining on gre_qnt 
+income_est <- left_join(incomeintel, score_conv, by="gre_qnt")
+
+income_est <- income_est %>% 
+  mutate("gre_qnt" <- ifelse(grad_year < 2011, current_scale, gre_qnt))
+
+income_est <- income_est %>% 
+  select(-gre_qnt, -current_scale, -rank) 
+names(income_est)[3] <- "gre_qnt"
+```
+```{r Viewing New Scores Conversion}
+head(income_est)
+head(incomeintel)
+head(score_conv)
+#scores conversions are correct
+```
+
+### (C)
+
+```{r Scatterplot_2}
+ggplot(data = income_est, aes(x = grad_year, y = salary_p4)) + 
+  geom_point() + 
+  geom_smooth(method='lm') +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(x = "Graduation Year", y = "Income Four Years Post-Graduation") + 
+  scale_x_continuous(labels = as.character(incomeintel$grad_year), 
+                     breaks = incomeintel$grad_year)
+
+```
+```{r}
+#Used: https://github.com/UC-MACSS/persp-analysis_A18/issues/13 
+
+base_year <- 2011
+
+#mean salary by each year 
+avg_inc_by_year <- income_est %>% 
+  group_by(grad_year) %>% 
+  summarize(mean_salary = mean(salary_p4))
+
+#growth rate in salaries across all 13 years 
+avg_growth_rate <- avg_inc_by_year %>% 
+  mutate((mean_salary - (lag(mean_salary, default = first(mean_salary))))/(lag(mean_salary, default = first(mean_salary))))
+names(avg_growth_rate)[3] <- "sal_growth_rate" 
+
+income_est <- left_join(income_est, avg_growth_rate, by = "grad_year") 
+head(income_est)
+```
+```{r}
+income_est <- income_est %>% 
+  mutate(new_salary = salary_p4 / ((1 + sal_growth_rate)*(grad_year - 2001)))
+```
+```{r Scatterplot_3}
+income_estimate <- income_est %>% 
+  mutate("new_sal" = ifelse(new_salary == Inf, salary_p4, new_salary))
+head(income_estimate)
+
+ggplot(data = income_estimate, aes(x = grad_year, y = new_sal)) + 
+  geom_point() + 
+  geom_smooth(method='lm') +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(x = "Graduation Year", y = "Income Four Years Post-Graduation") + 
+  scale_x_continuous(labels = as.character(incomeintel$grad_year), 
+                     breaks = incomeintel$grad_year)
+
+```
+### (D)
+
+The new coefficients for the intercept and GRE quantitative score are -55284.7 and 485.5 respectively. standared errors are   28115.2 and 179.6. Essentially these salaries are adjusted according to the average growth rate for inflation on a year-to-year basis, so its showing that with each point-increase in the gre score, salary increases by only $485.50$ whereas before, it decrased by $25.76$. These are also significant at a 0.05 confidence level so we fail to reject the HO that higher intelligence (measured with GRE quant score) is associated with higher income. 
+```{r New LM}
+
+income_lm <- lm(new_sal ~ gre_qnt, data = income_estimate)
+income_lm
+summary(income_lm)
+```
+
+## Assessment of Kossinets and Watts (2009) (3 points)
+
+
