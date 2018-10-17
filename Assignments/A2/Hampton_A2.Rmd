@@ -71,8 +71,8 @@ lm_age
 lm_female
 ```
 So the equations are: 
-age_form = 44.2096668+(tot_inc*0.0000252)+(wgt*-0.0067221) 
-gen_form = 3.761+(tot_inc*-0.000005250)+(wgt*-0.01953)
+$44.2096668+(tot inc*0.0000252)+(wgt*-0.0067221)$
+$3.761+(tot inc*-0.000005250)+(wgt*-0.01953)$
 
 ### (B)
 
@@ -116,15 +116,15 @@ corr_matrix
 ```{r Viewing Data, results="hide"}
 print(incomeintel)
 ```
-The equation: salary_p4i = b0 + b1gre_qnti + ei
+The equation: $salaryp4_i = b_0 + b_1greqnt_i + e_i$
 
 ### (A)
 
-In plain words, the equation is for the salary is the predictor variable, and the GRE quantitative score is the predictor variable. b0 is the Y-intercept. ei is an error term. Using a linear regression model and inference from the graph, we compute the equation to be: 
+In plain words, the equation is for the salary is the predictor variable, and the GRE quantitative score is the predictor variable. $b_0$ is the Y-intercept. $e_i$ is an error term. Using a linear regression model and inference from the graph, we compute the equation to be: 
 
-salary_p4i = 89541.29 - -25.76*gre_qnti + ei
+$salaryp4_i = 89541.29 -25.76*greqnt_i + e_i$
 
-The estimated Y-intercept coefficient is 89,541.29 and the estimated GRE score coefficient is -25.76. Their standard errors are 878.764 and 1.365 respectively. Both coefficients are significant at the 95% confidence level. 
+The estimated Y-intercept coefficient is $89,541.29$ and the estimated GRE score coefficient is $-25.76$. Their standard errors are $878.764$ and $1.365$ respectively. Both coefficients are significant at the 95% confidence level. 
 ```{r}
 Y_hat <- mean(incomeintel$salary_p4)
 Y_hat
@@ -236,5 +236,28 @@ summary(income_lm)
 ```
 
 ## Assessment of Kossinets and Watts (2009) (3 points)
+### Questions
+(a) State the research question of this paper. The research question is the fundamental question that the paper is trying to answer. The research question should be one sentence long and should end with a question mark. 
+An example of a research question is, "What is the effect of an extra hour of storm advisory in a county on births nine months later in that county?"
+(b) Describe the data that the authors used. How many data sources? How many observations (this question could have multiple dimensions)? What time period did the data span? Where can you find a description and definition of all the variables?
+(c) Highlight a potential problem that the data cleaning process might introduce in a way that diminishes the authors' ability to answer the research question.
+(d) In this paper, the underlying theoretical construct is "social relationships" and the data are email logs linked to other characteristics of the senders and receivers. Discuss one weakness of this match of data source and theoretical construct and describe how the authors address this weakness.
+
+### Answers 
+
+According to Kossinets and Watts (2009), homophily is described as the tendency of "like to associate with like," or similar people associating through different social systems with one another. They identify two different types of homophily: $choice-homophily$ and $induced-homophily$, which are individual and structural views of the world. Neverthless, both of these homophilies are related by the fact that social environments are created by peoples' choices. Kossinets and Watts use a university community to study the origins of homophily among students, faculty and staff. The research question they explore is ** (a) generally, what is the origin of homophily? Or in context, "What are the primary determinants (social, structural and individual factors), called "risk sets" of who forms a "tie" with who?" ** 
+
+In order to fully develop the research question and analyze outcomes, the "Data and Methods" secion of their paper explain some of the answers to part **(b)**. The overall analysis used a dataset of a size 7,156,162 messages exchanged by 30,396 undergraduate and graduate students, faculty, and staff in a large U.S. university, who used their university e-mail accounts to both send and receive messages during one academic year or 270 days of observation. These were selected out of 34,574 users who were active throughout both
+semesters. For the specific research question, they sampled a total of about 100,000 cases (pairs of nodes that experienced a tie-transition) over a 210-day period.
+
+The data set also codes for several individual attributes that may represent different dimensions of homophily (you can find a description and definition for these by seeing Appendix A). These include personal characteristics (gender, age, status, field, year, and state (U.S. native/foreigner)), organizational affiliations (primary department, school, campus, dormitory, academic field); course-related variables (courses taken, courses taught); and e-mail-related variables (days active, messages sent, messages received, in-degree, out-degree, not included (reciprocated degree). Table 1 on page 411 shows the status breakdown of respondents as well. 
+
+The dataset only includes information for individuals who both sent and received emails using their university addresses, for both semesters of the academic year. The sender ID, and the IDs of all recipients of the message, extracted from the mail server logs were anonymized and the actual university used was not specified. These were compiled from 3 different databases on: (1) the logs of e-mail interactions within the university over one academic year, (2) individual attributes (status, gender, age, department, number of years in the community, etc.), and (3) records of course registration, in which courses were recorded separately for each semester. 
+
+**(c)** The selection of only users active in both semesters and those who communicated only with university emails significantly narrows the scope of the analysis. When cleaning binomial variables that were coded differently for the same user, they selected the value using a set of heuristics-- though, the narrowing of the dataset may have biases in it that are different from commonly used heuristics. They assumed that most recent modal values were the most likely to be correct, though a user/data collector may have edited a mistake they made in the first semester and updated it with the correct information in the second. In the case with flagging status, they applied two flags when one was missing, thinking that the student graduated and was employed when the student actually may not have graduated. These limitations generated by the cleaning process because those students who only communicated via these emails may be more homogenous, and overall at the university level homogenous more than the general population. A department may also require more email-communication but that may not have been reported in the details. The more specific issues just distort how social ties may be created based on different personal and academic characteristics. 
+
+In the same way that these cleaning processes have this effect, the limitation of these being electronic communications hinders a more complete analysis around social relationships and creating ties that speak to homophily. According to the authors, "Electronic communication, moreover, may differ in some systematic ways between formal and informal organizations and various communities, depending both on the demographics of their constituents and on the purpose of the organizations themselves." Additionally privacy prohibitions prevent them from observing types of interactions that may have been visible with an observational research component or social experiment. They address this **(d)** by using the extra data about individual attributes and affiliation, and looking at when pairs become triads, building a larger social network. They assume that, *"...forward-looking individuals select into structural positions, such as classes, clubs, and even friendship circles, precisely in order to maximize their chances of meeting the people they want to meet."* (pg. 435) 
+
+Nevertheless on a somewhat separate point, the lack of race and socioeconomic status is perhaps the most extreme limitation of this data especially since they mentioned multiple times that key interest in this study was to observe issues *"...such as segregation, inequality, and even the transmission of information between groups."* The history of segregation in the United States, both de facto and de jure, has been based on racial identity, with no observation of similar interests and group-membership at all-- especially when thinking of emails that may have been shared between affinity group members like a Black Student Union (BSU) or how many schools have group chats for native Chinese students. I'd bet that group membership and racial identity would be strongly correlated. Or since greek life is very expensive to enter, controlling for socioeconomic status may give more complete results as well. Not using those two details as control variables in my opinion drastically decrease my confidence in the outcomes. 
 
 
