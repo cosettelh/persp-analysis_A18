@@ -1,0 +1,36 @@
+---
+title: "MACS A6 Project Euler Exercise"
+author: "Cosette L. Hampton"
+date: "11/19/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Project Euler Exercise 
+
+#Code cited: https://stackoverflow.com/questions/49974601/r-prime-factorization by user Onyambu
+
+```{r factors}
+print_factors <- function(x){
+  n=c()
+  i=2
+  r=x
+  while(prod(n)!=x){
+    if(!r%%i) {n=c(n,i);r=r/i;i=1}
+    i=i+1
+  }
+  n
+}
+```
+
+```{r print factors}
+factors_list <- print_factors(600851475143) 
+max(factors_list)
+```
+```{r Euler confirmation, error = FALSE}
+knitr::include_graphics(path = '/Users/cosettelh/Documents/UChi_local/Grad_MPP/MACSS/persp-analysis_A18/Assignments/A6/Euler_confirmation_screenshot.png')
+```
+
